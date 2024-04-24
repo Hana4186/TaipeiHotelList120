@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Taipei Hotel Data - 4 -資料排版</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
+        crossorigin="anonymous"></script>
+    <script src="./js/jquery-3.7.1.min.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <div class="row justify-content-center mt-5 mb-3">
+            <div class="col-6">
+                <h1 class="text-center mb-4">Taipei Hotel List</h1>
+                <select class="form-select justify-content-center" aria-label="Default select example"
+                    id="selectNumOfPage">
+                    <option selected>Number of page</option>
+                    <option value="12">12</option>
+                    <option value="24">24</option>
+                    <option value="36">36</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="row" id="hotel_list">
+            <div class="col-md-4 col-lg-3 mt-4">
+                <!-- <div class="card h-100">
+                    <div class="card-body shadow shadow-lg d-flex flex-column">
+                        <div class="h4 text-bg-success text-center fw-bolder rounded rounded-3 p-2">Name</div>
+                        <div class="h5">Address：</div>
+                        <div class="h5">TEL：</div>
+                        <button class="btn btn-outline-danger w-100 mt-auto">map</button>
+                    </div>
+                </div> -->
+            </div>
+        </div>
+        <div class="row m-5">
+            <nav aria-label="Page navigation example">
+                <ul class="pagination justify-content-center" id="pageNum">
+                    <!-- <li class="page-item"><a class="page-link" href="#">Previous</a></li> -->
+                    <!-- <li class="page-item"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item"><a class="page-link" href="#">2</a></li>
+                            <li class="page-item"><a class="page-link" href="#">3</a></li> -->
+                    <!-- <li class="page-item"><a class="page-link" href="#">Next</a></li> -->
+                </ul>
+            </nav>
+        </div>
+    </div>
+    <!-- ------------------------------------------------------------------------------- -->
+
+    <script>
+        var newdata;//注意function內的宣告(ver、let、const)不能共用
+        var numOfPage = 12;
+
+        $(function () {
+            $("#selectNumOfPage").change(function () {
+                console.log($(this).val());
+                numOfPage = $(this).val();
+
+                $.ajax({
+                    type: "GET",
+                    url: "https://hanagasumi.000webhostapp.com/class202403/240305_taipei_hotel_api.php",
+                    dataType: "json",
+                    async: false, //同步資料先關掉
+                    success: showdata,
+                    error: function () {
+                        alert("error-https://hanagasumi.000webhostapp.com/class202403/240305_taipei_hotel_api.php");
+                    }
+                });
+
+                //監聽要寫在主程式裡面
+                //頁碼監聽click，若監聽內容至少2層/渲染時，至少要給2個id以上才能觸發監聽成功，要告訴他是哪一層的子元素
+                $("#pageNum #mypage").click(function (event) {
+                    //避免點擊畫面後一直跳轉到最上頁
+                    event.preventDefault();
+
+                    var page = $(this).data("id");
+                    console.log(page);
+                    drawView(page);
+
+                    if (page == 0) {
+                        $("#previous").addClass('d-none');
+                    } else {
+                        $("#previous").removeClass('d-none');
+                    }
+
+                    if (page == newdata.length - 1) {
+                        $("#next").addClass('d-none');
+                    } else {
+                        $("#next").removeClass('d-none');
+                    }
+                });
+            });
+        });
+
+        function showdata(data) {
+            // console.log(data);
+            newdata = []; //注意function內的宣告(ver、let、const)不能共用
+
+            data.forEach(function (item, key) {
+                //資料結構重組
+                if (key % numOfPage == 0) {
+                    //餘數=0，資料跳下一個[]
+                    newdata.push([]);
+                }
+
+                //商取整數: 頁數
+                var page = parseInt(key / numOfPage);
+                newdata[page].push(item);
+            });
+            console.log(newdata);
+            drawView(0);
+
+            //產生頁碼
+            $("#pageNum").empty(); //先清空內容
+            //$("#pageNum").append('<li class="page-item" id="previous" ><a class="page-link" href="#">Previous</a></li>');
+
+            newdata.forEach(function (item, key) {
+                var page = key + 1;
+                var pagenumlist = '<li class="page-item" data-id = "' + key + '" id="mypage"><a class="page-link" href="#">' + page + '</a></li>';
+
+                $("#pageNum").append(pagenumlist);
+            });
+
+            //$("#pageNum").append('<li class="page-item" id="next" ><a class="page-link" href="#">Next</a></li>');
+        }
+
+        // console.log(changeDataConsist[0]);
+        // console.log(changeDataConsist[1]);
+
+        function drawView(page) {
+            $("#hotel_list").empty();
+            newdata[page].forEach(function (item, key) {
+                var cardcontent = '<div class="col-md-4 col-lg-3 mt-4"><div class="card h-100" ><div class="card-body shadow shadow-lg d-flex flex-column"><div class="h5 text-bg-success text-center fw-bolder rounded rounded-3 p-2">' + item.name + '</div><div class="h6">Address：<br>　' + item.display_addr + '</div><div class="h6">TEL：' + item.tel + '</div><button class="btn btn-outline-danger w-100 mt-auto">map</button></div>';
+                /*
+                Tip：
+                
+                d-flex flex-column：同一row外框，垂直高度統一
+                
+                <button class="btn btn-outline-danger w-100 mt-auto">
+                    mt-auto：margin-top自動調整，這樣按鈕會自動留在下方
+                */
+                $("#hotel_list").append(cardcontent);
+            });
+        }
+    </script>
+</body>
+
+</html>
